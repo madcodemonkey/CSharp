@@ -1,0 +1,13 @@
+{
+  "title": "Eternal Sunshine of a spotless mind",
+  "config_version": 3,
+  "config_address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zip": "10001"
+  },
+  "misc": {
+    "notes": "This is a sample JSON file for testing purposes.",
+    "tags": [ "sample", "test", "json" ]
+  }
+}

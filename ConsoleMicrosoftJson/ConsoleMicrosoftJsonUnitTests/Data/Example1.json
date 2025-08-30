@@ -1,0 +1,27 @@
+{
+  "personOne": {
+    "name": "Alice",
+    "age": 30,
+    "city": "New York",
+    "spouse": {
+      "name": "John",
+      "age": 32,
+      "favoriteColors": [ "blue", "green" ],
+      "address": {
+        "street": "123 Main St",
+        "city": "New York",
+        "zip": "10001"
+      }
+    }
+  },
+  "personTwo": {
+    "name": "Bob",
+    "age": 25,
+    "city": "Los Angeles"
+  },
+  "perSONThree": {
+    "name": "James",
+    "age": 23,
+    "city": "Jacksonville"
+  }
+}
