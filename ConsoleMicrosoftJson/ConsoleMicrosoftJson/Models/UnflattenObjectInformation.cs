@@ -2,8 +2,6 @@
 
 public class UnflattenObjectInformation
 {
-    private readonly string? _targetPropertyName;
-
     /// <summary>Default Constructor</summary>
     public UnflattenObjectInformation() { }
 
@@ -22,7 +20,7 @@ public class UnflattenObjectInformation
     public string PropertyName { get; set; }
 
     /// <summary>
-    /// The name of the object or array that will be created on the source
+    /// The name of the NEW or EXISTING object/array that will be used on the source
     /// </summary>
     public string TargetObjectName { get; set; }
 

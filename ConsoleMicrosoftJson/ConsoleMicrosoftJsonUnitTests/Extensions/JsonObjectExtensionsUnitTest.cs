@@ -188,7 +188,17 @@ public class JsonObjectExtensionsUnitTest
         // Level 0: source level
         Assert.NotNull(sourceObject);
         Assert.Equal("Bob Marley", sourceObject["name"]?.ToString());
-        // Level 1: source's config node
+
+        // Level 1: source's concerts node
+        var birthObject = sourceObject["birth"] as JsonObject;
+        Assert.NotNull(birthObject);
+        Assert.Equal("1945-02-06", birthObject["date"]?.ToString());
+        // Level 2: birth's place node
+        var placeObject = birthObject["place"] as JsonObject;
+        Assert.NotNull(placeObject);
+        Assert.Equal("Nine Mile", placeObject["city"]?.ToString());
+
+        // Level 1: source's concerts node
         var concertsArray = sourceObject["concerts"] as JsonArray;
         Assert.NotNull(concertsArray);
         Assert.Equal(3, concertsArray.Count);

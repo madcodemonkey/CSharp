@@ -1,5 +1,11 @@
 {
   "name": "Bob Marley",
+  "band__notes":  null,
+  "birth__date": "1945-02-06",
+  "birth__place": {
+    "city": "Nine Mile",
+    "country": "Jamaica"
+  },
   "concerts__first": {
     "venue": "Majestic Theater",
     "location": "Kingston, Jamaica",
