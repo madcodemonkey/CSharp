@@ -68,6 +68,27 @@ public class JsonObjectExtensionsUnitTest
         Assert.NotNull(sourceObject["personTwo"]);
     }
 
+
+    [Fact]
+    public void ExtractToArrayUsingStartsWith_ExtractsArraysAsItems_WhenAnArrayIsTargeted()
+    {
+        // Arrange
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
+
+        // Act
+        JsonArray actual = sourceObject.ExtractToArrayUsingStartsWith(false, "musicians", false);
+
+        // var asString = actual.ToString();
+
+        // Assert
+        Assert.NotNull(actual);
+        Assert.Equal(2, actual.Count);
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "John Doe");
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "Jane Smith");
+
+        Assert.NotNull(sourceObject["musicians"]);
+    }
+
     [Fact]
     public void ExtractToArrayUsingStartsWith_DeepCloneCanReadCopyAllItems_WhenThereAreSeveralLevelsDeep()
     {

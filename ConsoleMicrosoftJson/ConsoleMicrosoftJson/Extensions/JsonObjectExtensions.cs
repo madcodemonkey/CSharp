@@ -95,21 +95,40 @@ public static class JsonObjectExtensions
 
         foreach (var item in source)
         {
-            if (item.Value != null && jsonNodeCompareFunction(item))
+            if (jsonNodeCompareFunction(item))
             {
-                results.Add(item.Value.DeepClone());
-
-                if (removeSourceProperty)
+                if (item.Value != null)
                 {
-                    propertiesToRemove.Add(item.Key);
+                    // Are we trying to extract an array?
+                    if (item.Value is JsonArray array)
+                    {
+                        // Add each item in the array to the results
+                        foreach (var arrayItem in array)
+                        {
+                            if (arrayItem != null)
+                            {
+                                results.Add(arrayItem.DeepClone());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Just add the single item
+                        results.Add(item.Value.DeepClone());
+                    }
                 }
+
+                propertiesToRemove.Add(item.Key);
             }
         }
 
         // Remove the properties after the loop to avoid modifying the collection while iterating
-        foreach (var propertyName in propertiesToRemove)
+        if (removeSourceProperty)
         {
-            source.Remove(propertyName);
+            foreach (var propertyName in propertiesToRemove)
+            {
+                source.Remove(propertyName);
+            }
         }
 
         return results;
