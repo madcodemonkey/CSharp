@@ -4,6 +4,36 @@ namespace ConsoleMicrosoftJson.Extensions;
 
 public static class JsonObjectExtensions
 {
+    public static T? SelectNode<T>(this JsonNode source, string periodDelimitedPath) where T : JsonNode
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        if (string.IsNullOrEmpty(periodDelimitedPath))
+            throw new ArgumentNullException(nameof(periodDelimitedPath));
+
+        var parts = periodDelimitedPath.Split('.');
+        JsonNode? currentNode = source;
+
+        foreach (var part in parts)
+        {
+            if (currentNode is JsonObject currentObject && currentObject.ContainsKey(part))
+            {
+                currentNode = currentObject[part];
+            }
+            else if (currentNode is JsonArray)
+            {
+                // If the user was targeting an array, return the array if T is JsonArray
+                if (part == parts.Last() && typeof(T) is JsonArray)
+                    return currentNode as T;
+
+                throw new InvalidOperationException("Cannot navigate through arrays. " +
+                     $"Invalid part '{part}' in path '{periodDelimitedPath}'.");
+            }
+        }
+
+        return currentNode as T;
+    }
+
     /// <summary>
     /// Creates a deep clone of properties and puts them into an array based upon the text
     /// that the property starts with.  If indicated, the source property can be removed/deleted.
@@ -36,6 +66,57 @@ public static class JsonObjectExtensions
     /// to see if the current node should be extracted</param>
     /// <param name="removeSourceProperty">Indicates if you want the source property removed/deleted</param>
     /// <returns>JsonArray of extracted objects (it could be empty if noting is found)</returns>
+    /// <example>
+    /// This 
+    /// {
+    ///   "personOne": {
+    ///     "name": "Alice",
+    ///     "age": 30,
+    ///     "city": "New York",
+    ///     "spouse": {
+    ///       "name": "John",
+    ///       "age": 32,
+    ///       "favoriteColors": [ "blue", "green" ],
+    ///       "address": {
+    ///         "street": "123 Main St",
+    ///         "city": "New York",
+    ///         "zip": "10001"
+    ///       }
+    ///     }
+    ///   },
+    ///   "personTwo": {
+    ///     "name": "Bob",
+    ///     "age": 25,
+    ///     "city": "Los Angeles"
+    ///   }
+    /// }
+    /// becomes this when using a function that returns true if the property name starts with "person"
+    /// [
+    ///   {
+    ///     "name": "Alice",
+    ///     "age": 30,
+    ///     "city": "New York",
+    ///     "spouse": {
+    ///       "name": "John",
+    ///       "age": 32,
+    ///       "favoriteColors": [
+    ///         "blue",
+    ///         "green"
+    ///       ],
+    ///       "address": {
+    ///         "street": "123 Main St",
+    ///         "city": "New York",
+    ///         "zip": "10001"
+    ///       }
+    ///     }
+    ///   },
+    ///   {
+    ///     "name": "Bob",
+    ///     "age": 25,
+    ///     "city": "Los Angeles"
+    ///   }
+    /// ]
+    /// </example>
     public static JsonArray ExtractToArrayUsingFunc(this JsonObject source, bool removeSourceProperty,
         Func<KeyValuePair<string, JsonNode?>, bool> nodeCompareFunction)
     {
@@ -114,7 +195,7 @@ public static class JsonObjectExtensions
     ///        "city": "New York",
     ///        "zip": "10001"
     ///}
-    /// becomes this if you split on the '_' character, remove the source properties and
+    /// becomes this if you split on the '__' delimiter, remove the source properties and
     /// return config as the target property name and address as the new property name.
     /// {
     ///     "title": "Eternal Sunshine of a spotless mind",

@@ -23,5 +23,17 @@
     "name": "James",
     "age": 23,
     "city": "Jacksonville"
-  }
+  },
+  "musicians": [
+    {
+      "name": "John Doe",
+      "instrument": "Guitar",
+      "age": 28
+    },
+    {
+      "name": "Jane Smith",
+      "instrument": "Drums",
+      "age": 32
+    }
+  ]
 }

@@ -56,6 +56,7 @@ public class JsonObjectExtensionsUnitTest
         // Act
         JsonArray actual = sourceObject.ExtractToArrayUsingStartsWith(false, "perSON", false);
 
+        var ddd = actual.ToString();
         // Assert
         Assert.NotNull(actual);
         Assert.Equal(3, actual.Count);
@@ -94,6 +95,50 @@ public class JsonObjectExtensionsUnitTest
         Assert.Equal("123 Main St", address["street"]?.ToString());
     }
     #endregion // ExtractToArrayUsingStartsWith
+
+    #region SelectNode
+    [Fact]
+    public void SelectNode_CanFindJsonObject()
+    {
+        // Arrange
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
+
+        // Act
+        JsonObject? actual = sourceObject.SelectNode<JsonObject>("personOne.spouse.address");
+
+        // Assert
+        Assert.NotNull(actual);
+        Assert.True(actual["city"]?.ToString() == "New York");
+    }
+
+    [Fact]
+    public void SelectNode_CanFindJsonArray()
+    {
+        // Arrange
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
+
+        // Act
+        JsonArray? actual = sourceObject.SelectNode<JsonArray>("personOne.spouse.favoriteColors");
+
+        // Assert
+        Assert.NotNull(actual);
+        Assert.Equal(2, actual.Count);
+        Assert.True(actual[0]?.ToString() == "blue");
+    }
+
+    [Fact]
+    public void SelectNode_ThrowsAnException_WhenAttemptingToNavigateAnArray()
+    {
+        // Arrange
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
+
+        // Act
+        var actual = Assert.Throws<InvalidOperationException>(() => sourceObject.SelectNode<JsonArray>("musicians.name"));
+
+        // Assert
+        Assert.Contains("Cannot navigate through arrays.", actual.Message);
+    }
+    #endregion // SelectNode
 
     #region UnflattenJsonObjectUsingSplit
     [Fact]
@@ -140,5 +185,4 @@ public class JsonObjectExtensionsUnitTest
         Assert.NotNull(config["address"]);
     }
     #endregion // UnflattenJsonObjectUsingSplit
-
 }
