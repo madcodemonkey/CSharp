@@ -4,36 +4,6 @@ namespace ConsoleMicrosoftJson.Extensions;
 
 public static class JsonObjectExtensions
 {
-    public static T? SelectNode<T>(this JsonNode source, string periodDelimitedPath) where T : JsonNode
-    {
-        if (source == null)
-            throw new ArgumentNullException(nameof(source));
-        if (string.IsNullOrEmpty(periodDelimitedPath))
-            throw new ArgumentNullException(nameof(periodDelimitedPath));
-
-        var parts = periodDelimitedPath.Split('.');
-        JsonNode? currentNode = source;
-
-        foreach (var part in parts)
-        {
-            if (currentNode is JsonObject currentObject && currentObject.ContainsKey(part))
-            {
-                currentNode = currentObject[part];
-            }
-            else if (currentNode is JsonArray)
-            {
-                // If the user was targeting an array, return the array if T is JsonArray
-                if (part == parts.Last() && typeof(T) is JsonArray)
-                    return currentNode as T;
-
-                throw new InvalidOperationException("Cannot navigate through arrays. " +
-                     $"Invalid part '{part}' in path '{periodDelimitedPath}'.");
-            }
-        }
-
-        return currentNode as T;
-    }
-
     /// <summary>
     /// Creates a deep clone of properties and puts them into an array based upon the text
     /// that the property starts with.  If indicated, the source property can be removed/deleted.
@@ -53,7 +23,7 @@ public static class JsonObjectExtensions
             StringComparison.Ordinal :
             StringComparison.OrdinalIgnoreCase;
 
-        return source.ExtractToArrayUsingFunc(removeSourceProperty,
+        return source.ExtractToArray(removeSourceProperty,
             item => item.Key.StartsWith(startsWith, comparison));
     }
 
@@ -117,7 +87,7 @@ public static class JsonObjectExtensions
     ///   }
     /// ]
     /// </example>
-    public static JsonArray ExtractToArrayUsingFunc(this JsonObject source, bool removeSourceProperty,
+    public static JsonArray ExtractToArray(this JsonObject source, bool removeSourceProperty,
         Func<KeyValuePair<string, JsonNode?>, bool> nodeCompareFunction)
     {
         var results = new JsonArray();
@@ -156,8 +126,9 @@ public static class JsonObjectExtensions
     /// <param name="source">Source object</param>
     /// <param name="removeSourceProperty">Indicates if we should remove the property from the source object.</param>
     /// <param name="targetParent">The targetParent object where new properties will be created</param>
-    /// <param name="splitDelimiter">The split delimiter (double underscore by default).</param>
-    public static void UnflattenJsonObjectUsingSplit(this JsonObject source,
+    /// <param name="splitDelimiter">The split delimiter (double underscore by default since that how
+    /// AKS represents different levels with environment variables).</param>
+    public static void UnflattenUsingSplitDelimiter(this JsonObject source,
         bool removeSourceProperty, JsonObject targetParent, string splitDelimiter = "__")
     {
         source.UnflattenJsonObjectUsingFunc(removeSourceProperty, targetParent,
@@ -174,6 +145,36 @@ public static class JsonObjectExtensions
     }
 
     /// <summary>
+    /// Examines all properties on the source for the delimiter pattern.  If any are found, they
+    /// are moved to properties and the original are deleted.  The name of the new property is
+    /// determined by the property split.  In other words, if the property name was config__version,
+    /// a new object called config would be created on the current item and a version property would
+    /// be created on config containing the new value.  If the config property already exists,
+    /// version will be added to it (exceptions can occur if version already exists).
+    /// After the source is processed, we walk through every property on the source and recursively
+    /// call this method to process it and any children it may have.
+    /// </summary>
+    /// <param name="source">Source object</param>
+    /// <param name="splitDelimiter">The split delimiter (double underscore by default since that how
+    /// AKS represents different levels with environment variables).</param>
+    public static void UnflattenRecursiveUsingSplitDelimiter(this JsonObject source, string splitDelimiter = "__")
+    {
+        // First unflatten the current level
+        // We are forcing the removal of properties because we are about to iterate over all the children
+        // again and we don't want to process the same property twice.
+        UnflattenUsingSplitDelimiter(source, true, source, splitDelimiter);
+
+        // Now recurse into any child objects
+        foreach (var item in source)
+        {
+            if (item.Value is JsonObject childObject)
+            {
+                UnflattenRecursiveUsingSplitDelimiter(childObject, splitDelimiter);
+            }
+        }
+    }
+
+    /// <summary>
     /// Moves properties from the source object to the targetParent object.  On the
     /// targetParent object you will be asked for a new property name and it will be
     /// created or overwritten with the data being moved.
@@ -185,6 +186,7 @@ public static class JsonObjectExtensions
     /// <param name="nodeCompareFunction">The function used to determine if a property
     /// should be moved from the source</param>
     /// <param name="newPropertyNameFunction">The function that provides the new </param>
+    /// <returns>True if anything was added or modified; otherwise, false</returns>
     /// <example>
     /// This
     /// {
@@ -209,11 +211,12 @@ public static class JsonObjectExtensions
     ///     }
     /// }
     /// </example>
-    public static void UnflattenJsonObjectUsingFunc(this JsonObject source, bool removeSourceProperty,
+    public static bool UnflattenJsonObjectUsingFunc(this JsonObject source, bool removeSourceProperty,
        JsonObject targetParent,
        Func<string, JsonNode?, bool> nodeCompareFunction,
        Func<string, JsonNode?, (string parentPropertyName, string newPropertyName)> newPropertyNameFunction)
     {
+        var result = false;
         var properties = new Dictionary<string, bool>();
 
         // In case the source and targetParent are the same object, obtain the property names first
@@ -242,6 +245,7 @@ public static class JsonObjectExtensions
             }
 
             targetPropertyObject[newPropertyName] = sourceProperty.DeepClone();
+            result = true;
         }
 
         // Remove the properties after the loop to avoid modifying the collection while iterating
@@ -250,6 +254,8 @@ public static class JsonObjectExtensions
             if (property.Value)
                 source.Remove(property.Key);
         }
+
+        return result;
     }
 
 

@@ -4,7 +4,9 @@
   "config__address": {
     "street": "123 Main St",
     "city": "New York",
-    "zip": "10001"
+    "zip": "10001",
+    "notes__version": 1,
+    "notes__mail_instructions": "Leave at front desk"
   },
   "misc": {
     "notes": "This is a sample JSON file for testing purposes.",

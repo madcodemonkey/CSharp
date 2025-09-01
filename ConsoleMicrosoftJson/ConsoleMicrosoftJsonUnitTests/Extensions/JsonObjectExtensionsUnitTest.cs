@@ -19,7 +19,7 @@ public class JsonObjectExtensionsUnitTest
         // Assert
         Assert.NotNull(actual);
         Assert.Single(actual);
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "James"));
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "James");
 
         Assert.Null(sourceObject["perSONThree"]); // Should be removed
         Assert.NotNull(sourceObject["personOne"]); // Should NOT be removed
@@ -38,9 +38,9 @@ public class JsonObjectExtensionsUnitTest
         // Assert
         Assert.NotNull(actual);
         Assert.Equal(3, actual.Count);
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "James"));
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "Alice"));
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "Bob"));
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "James");
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "Alice");
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "Bob");
 
         Assert.Null(sourceObject["perSONThree"]);
         Assert.Null(sourceObject["personOne"]);
@@ -56,13 +56,12 @@ public class JsonObjectExtensionsUnitTest
         // Act
         JsonArray actual = sourceObject.ExtractToArrayUsingStartsWith(false, "perSON", false);
 
-        var ddd = actual.ToString();
         // Assert
         Assert.NotNull(actual);
         Assert.Equal(3, actual.Count);
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "James"));
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "Alice"));
-        Assert.True(actual.Any(person => person["name"]?.ToString() == "Bob"));
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "James");
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "Alice");
+        Assert.Contains(actual, person => (person as JsonObject)?["name"]?.ToString() == "Bob");
 
         Assert.NotNull(sourceObject["perSONThree"]);
         Assert.NotNull(sourceObject["personOne"]);
@@ -96,59 +95,15 @@ public class JsonObjectExtensionsUnitTest
     }
     #endregion // ExtractToArrayUsingStartsWith
 
-    #region SelectNode
+    #region UnflattenUsingSplitDelimiter
     [Fact]
-    public void SelectNode_CanFindJsonObject()
-    {
-        // Arrange
-        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
-
-        // Act
-        JsonObject? actual = sourceObject.SelectNode<JsonObject>("personOne.spouse.address");
-
-        // Assert
-        Assert.NotNull(actual);
-        Assert.True(actual["city"]?.ToString() == "New York");
-    }
-
-    [Fact]
-    public void SelectNode_CanFindJsonArray()
-    {
-        // Arrange
-        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
-
-        // Act
-        JsonArray? actual = sourceObject.SelectNode<JsonArray>("personOne.spouse.favoriteColors");
-
-        // Assert
-        Assert.NotNull(actual);
-        Assert.Equal(2, actual.Count);
-        Assert.True(actual[0]?.ToString() == "blue");
-    }
-
-    [Fact]
-    public void SelectNode_ThrowsAnException_WhenAttemptingToNavigateAnArray()
-    {
-        // Arrange
-        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example1.json");
-
-        // Act
-        var actual = Assert.Throws<InvalidOperationException>(() => sourceObject.SelectNode<JsonArray>("musicians.name"));
-
-        // Assert
-        Assert.Contains("Cannot navigate through arrays.", actual.Message);
-    }
-    #endregion // SelectNode
-
-    #region UnflattenJsonObjectUsingSplit
-    [Fact]
-    public void UnflattenJsonObjectUsingSplit_CanCreateConfig()
+    public void UnflattenUsingSplitDelimiter_CanCreateConfig()
     {
         // Arrange
         var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2a.json");
 
         // Act
-        sourceObject.UnflattenJsonObjectUsingSplit(true, sourceObject, "__");
+        sourceObject.UnflattenUsingSplitDelimiter(true, sourceObject, splitDelimiter: "__");
 
         // var asString = sourceObject.ToString();
 
@@ -163,7 +118,7 @@ public class JsonObjectExtensionsUnitTest
     }
 
     [Fact]
-    public void UnflattenJsonObjectUsingSplit_CanCreateConfig_WhenTargetIsNotSource()
+    public void UnflattenUsingSplitDelimiter_CanCreateConfig_WhenTargetIsNotSource()
     {
         // Arrange
         var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2a.json");
@@ -171,7 +126,7 @@ public class JsonObjectExtensionsUnitTest
         Assert.NotNull(parentObject);
 
         // Act
-        sourceObject.UnflattenJsonObjectUsingSplit(true, parentObject, "__");
+        sourceObject.UnflattenUsingSplitDelimiter(true, parentObject, splitDelimiter: "__");
 
         // var asString = sourceObject.ToString();
 
@@ -184,5 +139,38 @@ public class JsonObjectExtensionsUnitTest
         Assert.NotNull(config["version"]);
         Assert.NotNull(config["address"]);
     }
-    #endregion // UnflattenJsonObjectUsingSplit
+    #endregion // UnflattenUsingSplitDelimiter
+
+    #region UnflattenRecursiveUsingSplitDelimiter
+    [Fact]
+    public void UnflattenRecursiveUsingSplitDelimiter_CanCreateConfig()
+    {
+        // Arrange
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2a.json");
+
+        // Act
+        sourceObject.UnflattenRecursiveUsingSplitDelimiter(splitDelimiter: "__");
+
+        // var asString = sourceObject.ToString();
+
+        // Assert
+        // Level 0: source level
+        Assert.NotNull(sourceObject["title"]);
+        Assert.Null(sourceObject["config_version"]);
+        Assert.Null(sourceObject["config_address"]);
+        // Level 1: source's config node
+        var config = sourceObject["config"] as JsonObject;
+        Assert.NotNull(config);
+        Assert.NotNull(config["version"]);
+        Assert.NotNull(config["address"]);
+        // Level 2: config's address node
+        var address = config["address"] as JsonObject;
+        Assert.NotNull(address);
+        // Level 3: address's notes node
+        var notes = address["notes"] as JsonObject;
+        Assert.NotNull(notes);
+        Assert.NotNull(notes["version"]);
+        Assert.NotNull(notes["mail_instructions"]);
+    }
+    #endregion
 }
