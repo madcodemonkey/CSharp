@@ -132,15 +132,17 @@ public static class JsonObjectExtensions
         bool removeSourceProperty, JsonObject targetParent, string splitDelimiter = "__")
     {
         source.UnflattenJsonObjectUsingFunc(removeSourceProperty, targetParent,
-            (key, value) =>
+            (sourcePropertyName, property) =>
             {
-                var parts = key.Split(splitDelimiter);
-                return parts.Length == 2;
-            },
-            (key, value) =>
-            {
-                var parts = key.Split(splitDelimiter);
-                return (parts[0], parts[1]);
+                var parts = sourcePropertyName.Split(splitDelimiter);
+                if (parts.Length != 2)
+                    return null;
+
+                return new UnflattenObjectInformation(
+                    sourcePropertyName,
+                    parts[0],
+                    parts[1],
+                    property is JsonArray);
             });
     }
 
@@ -213,38 +215,72 @@ public static class JsonObjectExtensions
     /// </example>
     public static bool UnflattenJsonObjectUsingFunc(this JsonObject source, bool removeSourceProperty,
        JsonObject targetParent,
-       Func<string, JsonNode?, bool> nodeCompareFunction,
-       Func<string, JsonNode?, (string parentPropertyName, string newPropertyName)> newPropertyNameFunction)
+       Func<string, JsonNode?, UnflattenObjectInformation?> nodeCompareFunction)
     {
         var result = false;
-        var properties = new Dictionary<string, bool>();
+        var properties = new List<UnflattenObjectInformation>();
 
         // In case the source and targetParent are the same object, obtain the property names first
         // so that we avoid modifying the collection while iterating
         foreach (var item in source)
         {
-            if (item.Value != null && nodeCompareFunction(item.Key, item.Value))
+            var unflattenObjectInformation = nodeCompareFunction(item.Key, item.Value);
+            if (item.Value != null && unflattenObjectInformation != null)
             {
-                properties.Add(item.Key, removeSourceProperty);
+                properties.Add(unflattenObjectInformation);
             }
         }
 
         foreach (var item in properties)
         {
-            var sourceProperty = source[item.Key];
+            var sourceProperty = source[item.PropertyName];
             if (sourceProperty == null)
                 continue;
-            (string targetPropertyName, string newPropertyName) = newPropertyNameFunction(item.Key, sourceProperty);
 
-            var targetPropertyObject = targetParent[targetPropertyName] as JsonObject;
+            // Look for any other properties that are headed for the same target object.  If any of them 
+            // are arrays, we will put everything into an array
+            bool isArray = properties.Any(w => w.TargetObjectName == item.TargetObjectName && w.IsArray);
 
-            if (targetPropertyObject == null)
+            if (isArray)
             {
-                targetPropertyObject = new JsonObject();
-                targetParent[targetPropertyName] = targetPropertyObject;
+                var targetArray = targetParent[item.TargetObjectName] as JsonArray;
+
+                if (targetArray == null)
+                {
+                    targetArray = new JsonArray();
+                    targetParent[item.TargetObjectName] = targetArray;
+                }
+
+                if (item.IsArray)
+                {
+                    // Add array items to the array
+                    foreach (var arrayItem in (sourceProperty as JsonArray) ?? new JsonArray())
+                    {
+                        if (arrayItem != null)
+                        {
+                            targetArray.Add(arrayItem.DeepClone());
+                        }
+                    }
+                }
+                else
+                {
+                    // Add object to the array
+                    targetArray.Add(sourceProperty.DeepClone());
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(item.TargetPropertyName))
+            {
+                var targetObject = targetParent[item.TargetObjectName] as JsonObject;
+
+                if (targetObject == null)
+                {
+                    targetObject = new JsonObject();
+                    targetParent[item.TargetObjectName] = targetObject;
+                }
+
+                targetObject[item.TargetPropertyName] = sourceProperty.DeepClone();
             }
 
-            targetPropertyObject[newPropertyName] = sourceProperty.DeepClone();
             result = true;
         }
 
@@ -253,7 +289,7 @@ public static class JsonObjectExtensions
         {
             foreach (var property in properties)
             {
-                source.Remove(property.Key);
+                source.Remove(property.PropertyName);
             }
         }
 

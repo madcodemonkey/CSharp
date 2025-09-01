@@ -151,7 +151,7 @@ public class JsonObjectExtensionsUnitTest
         // Act
         sourceObject.UnflattenRecursiveUsingSplitDelimiter(splitDelimiter: "__");
 
-        // var asString = sourceObject.ToString();
+        var asString = sourceObject.ToString();
 
         // Assert
         // Level 0: source level
@@ -182,7 +182,7 @@ public class JsonObjectExtensionsUnitTest
         // Act
         sourceObject.UnflattenRecursiveUsingSplitDelimiter(splitDelimiter: "__");
 
-        var asString = sourceObject.ToString();
+        // var asString = sourceObject.ToString();
 
         // Assert
         // Level 0: source level
@@ -192,6 +192,9 @@ public class JsonObjectExtensionsUnitTest
         var concertsArray = sourceObject["concerts"] as JsonArray;
         Assert.NotNull(concertsArray);
         Assert.Equal(3, concertsArray.Count);
+        Assert.Contains(concertsArray, concert => (concert as JsonObject)?["venue"]?.ToString() == "Majestic Theater");
+        Assert.Contains(concertsArray, concert => (concert as JsonObject)?["venue"]?.ToString() == "State Theater");
+        Assert.Contains(concertsArray, concert => (concert as JsonObject)?["venue"]?.ToString() == "Lyceum Theatre");
     }
     #endregion
 }
