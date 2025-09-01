@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Data\Example3.json" />
-    <EmbeddedResource Include="Data\Example2.json" />
+    <EmbeddedResource Include="Data\Example2b.json" />
+    <EmbeddedResource Include="Data\Example2a.json" />
     <EmbeddedResource Include="Data\Example1.json" />
   </ItemGroup>
 

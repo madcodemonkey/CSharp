@@ -1,7 +1,7 @@
 {
   "title": "Eternal Sunshine of a spotless mind",
-  "config_version": 3,
-  "config_address": {
+  "config__version": 3,
+  "config__address": {
     "street": "123 Main St",
     "city": "New York",
     "zip": "10001"

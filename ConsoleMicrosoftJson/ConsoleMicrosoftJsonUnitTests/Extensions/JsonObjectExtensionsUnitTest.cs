@@ -100,10 +100,10 @@ public class JsonObjectExtensionsUnitTest
     public void UnflattenJsonObjectUsingSplit_CanCreateConfig()
     {
         // Arrange
-        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2.json");
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2a.json");
 
         // Act
-        sourceObject.UnflattenJsonObjectUsingSplit(true, sourceObject, '_');
+        sourceObject.UnflattenJsonObjectUsingSplit(true, sourceObject, "__");
 
         // var asString = sourceObject.ToString();
 
@@ -121,12 +121,12 @@ public class JsonObjectExtensionsUnitTest
     public void UnflattenJsonObjectUsingSplit_CanCreateConfig_WhenTargetIsNotSource()
     {
         // Arrange
-        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2.json");
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2a.json");
         var parentObject = sourceObject["misc"] as JsonObject;
         Assert.NotNull(parentObject);
 
         // Act
-        sourceObject.UnflattenJsonObjectUsingSplit(true, parentObject, '_');
+        sourceObject.UnflattenJsonObjectUsingSplit(true, parentObject, "__");
 
         // var asString = sourceObject.ToString();
 

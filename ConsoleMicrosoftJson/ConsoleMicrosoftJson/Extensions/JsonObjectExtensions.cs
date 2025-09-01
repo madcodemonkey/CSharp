@@ -75,19 +75,19 @@ public static class JsonObjectExtensions
     /// <param name="source">Source object</param>
     /// <param name="removeSourceProperty">Indicates if we should remove the property from the source object.</param>
     /// <param name="targetParent">The targetParent object where new properties will be created</param>
-    /// <param name="splitChar">The split character.</param>
+    /// <param name="splitDelimiter">The split delimiter (double underscore by default).</param>
     public static void UnflattenJsonObjectUsingSplit(this JsonObject source,
-        bool removeSourceProperty, JsonObject targetParent, char splitChar)
+        bool removeSourceProperty, JsonObject targetParent, string splitDelimiter = "__")
     {
         source.UnflattenJsonObjectUsingFunc(removeSourceProperty, targetParent,
             (key, value) =>
             {
-                var parts = key.Split(splitChar);
+                var parts = key.Split(splitDelimiter);
                 return parts.Length == 2;
             },
             (key, value) =>
             {
-                var parts = key.Split(splitChar);
+                var parts = key.Split(splitDelimiter);
                 return (parts[0], parts[1]);
             });
     }
@@ -99,7 +99,7 @@ public static class JsonObjectExtensions
     /// </summary>
     /// <param name="source">The source of the properties to move.</param>
     /// <param name="removeSourceProperty">Indicates if the property should be removed from the source.</param>
-    /// <param name="targetParent">The targetParent object where will will create new property or overwrite
+    /// <param name="targetParent">The targetParent object where will create new property or overwrite
     /// an existing property based upon the name you return from newPropertyNameFunction.</param>
     /// <param name="nodeCompareFunction">The function used to determine if a property
     /// should be moved from the source</param>
@@ -108,8 +108,8 @@ public static class JsonObjectExtensions
     /// This
     /// {
     ///    "title": "Eternal Sunshine of a spotless mind",
-    ///    "config_version": 3,
-    ///    "config_address": {
+    ///    "config__version": 3,
+    ///    "config__address": {
     ///        "street": "123 Main St",
     ///        "city": "New York",
     ///        "zip": "10001"
