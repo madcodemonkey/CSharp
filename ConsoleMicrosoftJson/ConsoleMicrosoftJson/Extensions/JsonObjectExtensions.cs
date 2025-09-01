@@ -249,10 +249,12 @@ public static class JsonObjectExtensions
         }
 
         // Remove the properties after the loop to avoid modifying the collection while iterating
-        foreach (var property in properties)
+        if (removeSourceProperty)
         {
-            if (property.Value)
+            foreach (var property in properties)
+            {
                 source.Remove(property.Key);
+            }
         }
 
         return result;

@@ -1,0 +1,20 @@
+{
+  "name": "Bob Marley",
+  "concerts__first": {
+    "venue": "Majestic Theater",
+    "location": "Kingston, Jamaica",
+    "date": "1962-11-30"
+  },
+  "concerts__favorites": [
+    {
+      "venue": "State Theater",
+      "location": "Olympia, Washington",
+      "date": "1965-08-01"
+    },
+    {
+      "venue": "Lyceum Theatre",
+      "location": "London, England",
+      "date": "1975-07-04"
+    }
+  ]
+}

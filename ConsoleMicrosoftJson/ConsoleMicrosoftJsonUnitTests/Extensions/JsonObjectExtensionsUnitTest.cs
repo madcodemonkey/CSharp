@@ -143,7 +143,7 @@ public class JsonObjectExtensionsUnitTest
 
     #region UnflattenRecursiveUsingSplitDelimiter
     [Fact]
-    public void UnflattenRecursiveUsingSplitDelimiter_CanCreateConfig()
+    public void UnflattenRecursiveUsingSplitDelimiter_CanCreateSubObjects()
     {
         // Arrange
         var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example2a.json");
@@ -171,6 +171,27 @@ public class JsonObjectExtensionsUnitTest
         Assert.NotNull(notes);
         Assert.NotNull(notes["version"]);
         Assert.NotNull(notes["mail_instructions"]);
+    }
+
+    [Fact]
+    public void UnflattenRecursiveUsingSplitDelimiter_CanHandleArrays()
+    {
+        // Arrange
+        var sourceObject = DataFileLoader.GetFileDataAsJsonObject("Example3.json");
+
+        // Act
+        sourceObject.UnflattenRecursiveUsingSplitDelimiter(splitDelimiter: "__");
+
+        var asString = sourceObject.ToString();
+
+        // Assert
+        // Level 0: source level
+        Assert.NotNull(sourceObject);
+        Assert.Equal("Bob Marley", sourceObject["name"]?.ToString());
+        // Level 1: source's config node
+        var concertsArray = sourceObject["concerts"] as JsonArray;
+        Assert.NotNull(concertsArray);
+        Assert.Equal(3, concertsArray.Count);
     }
     #endregion
 }
