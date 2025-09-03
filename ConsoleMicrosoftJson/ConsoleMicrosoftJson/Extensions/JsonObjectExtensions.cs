@@ -150,17 +150,23 @@ public static class JsonObjectExtensions
     public static void UnflattenUsingSplitDelimiter(this JsonObject source,
         bool removeSourceProperty, JsonObject targetParent, string splitDelimiter = "__")
     {
+        if (string.IsNullOrWhiteSpace(splitDelimiter))
+            throw new ArgumentException("You must specify a split delimiter!", nameof(splitDelimiter));
+
         source.UnflattenJsonObjectUsingFunc(removeSourceProperty, targetParent,
             (sourcePropertyName, sourcePropertyValue) =>
             {
                 var parts = sourcePropertyName.Split(splitDelimiter);
-                if (parts.Length != 2)
+                if (parts.Length < 2)
                     return null;
+
+                var indexOfFirstDelimiter = sourcePropertyName.IndexOf(splitDelimiter, StringComparison.Ordinal);
+                var targetPropertyName = sourcePropertyName.Substring(indexOfFirstDelimiter + splitDelimiter.Length);
 
                 return new UnflattenObjectInformation(
                     sourcePropertyName,
                     parts[0],
-                    parts[1],
+                    targetPropertyName,
                     sourcePropertyValue is JsonArray);
             });
     }
@@ -255,6 +261,16 @@ public static class JsonObjectExtensions
             {
                 UnflattenRecursiveUsingSplitDelimiter(childObject, splitDelimiter);
             }
+            else if (item.Value is JsonArray childArray)
+            {
+                foreach (var arrayItem in childArray)
+                {
+                    if (arrayItem is JsonObject arrayItemObject)
+                    {
+                        UnflattenRecursiveUsingSplitDelimiter(arrayItemObject, splitDelimiter);
+                    }
+                }
+            }
         }
     }
 
@@ -318,7 +334,12 @@ public static class JsonObjectExtensions
 
             // Look for any other properties that are headed for the same target object.  If any of them 
             // are arrays, we will put everything into an array
-            bool isArray = properties.Any(w => w.TargetObjectName == item.TargetObjectName && w.IsArray);
+            bool isArray = targetParent[item.TargetObjectName] switch
+            {
+                JsonArray => true,
+                JsonObject => false,
+                _ => properties.Any(w => w.TargetObjectName == item.TargetObjectName && w.IsArray)
+            };
 
             if (isArray)
             {

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Nodes;
+#pragma warning disable CS0184
 
 namespace ConsoleMicrosoftJson.Extensions;
 
@@ -27,8 +28,11 @@ public static class JsonNodeExtensions
 
         foreach (var part in parts)
         {
-            if (currentNode is JsonObject currentObject && currentObject.ContainsKey(part))
+            if (currentNode is JsonObject currentObject)
             {
+                if (!currentObject.ContainsKey(part))
+                    return null;
+
                 currentNode = currentObject[part];
             }
             else if (currentNode is JsonArray)
